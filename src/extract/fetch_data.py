@@ -29,3 +29,26 @@ class FootballDataFetcher:
         except requests.exceptions.RequestException as e:
             print(f"An unexpected error occurred: {e}")
             return None
+        
+    def fetch_match_events_data(self, id) -> list | None:
+        
+        match_events_url = f"{self.base_url}/api/v1/matches/{id}/events"
+        print(f"Fetching football data from {match_events_url}...")
+
+        # make the API call and return the data
+        try:
+            response = requests.get(match_events_url)
+            if response.status_code == 200:
+                return response.json()
+            else:            
+                print(f"Failed to fetch data: {response.status_code}")
+                return None
+        except requests.exceptions.Timeout:
+            print("Request timed out")
+            return None
+        except requests.exceptions.ConnectionError:
+            print("Failed to connect to the server")
+            return None
+        except requests.exceptions.RequestException as e:
+            print(f"An unexpected error occurred: {e}")
+            return None

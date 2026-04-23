@@ -1,0 +1,111 @@
+{
+    "awayTeam": {
+        "cards": [
+            {
+                "period": "SecondHalf",
+                "time": "89",
+                "type": "Yellow",
+                "playerId": "8425",
+                "timestamp": "20050704T143510+0100"
+            }
+        ],
+        "subs": [
+            {
+                "period": "SecondHalf",
+                "playerOnId": "2009",
+                "playerOffId": "1045",
+                "time": "84",
+                "timestamp": "20050704T143510+0100"
+            },
+            {
+                "period": "SecondHalf",
+                "playerOnId": "2006",
+                "playerOffId": "1697",
+                "time": "72",
+                "timestamp": "20050704T143510+0100"
+            },
+            {
+                "period": "FirstHalf",
+                "playerOnId": "1993",
+                "playerOffId": "1999",
+                "time": "14",
+                "timestamp": "20050704T143510+0100"
+            }
+        ],
+        "name": "Sunderland",
+        "id": "56",
+        "shortName": "Sunderland",
+        "goals": [
+            {
+                "goalType": "Own",
+                "period": "FirstHalf",
+                "assistPlayerId": null,
+                "time": "4",
+                "playerId": "7034",
+                "timestamp": "20050704T161231+0100"
+            }
+        ]
+    },
+    "homeTeam": {
+        "cards": [
+            {
+                "period": "SecondHalf",
+                "time": "89",
+                "type": "Yellow",
+                "playerId": "1831",
+                "timestamp": "20050704T141250+0100"
+            },
+            {
+                "period": "SecondHalf",
+                "time": "89",
+                "type": "Yellow",
+                "playerId": "2034",
+                "timestamp": "20050704T141250+0100"
+            }
+        ],
+        "subs": [
+            {
+                "period": "SecondHalf",
+                "playerOnId": "1807",
+                "playerOffId": "7034",
+                "time": "89",
+                "timestamp": "20050704T141250+0100"
+            },
+            {
+                "period": "FirstHalf",
+                "playerOnId": "3524",
+                "playerOffId": "3847",
+                "time": "29",
+                "timestamp": "20050704T141251+0100"
+            },
+            {
+                "period": "SecondHalf",
+                "playerOnId": "3",
+                "playerOffId": "3736",
+                "time": "63",
+                "timestamp": "20050704T141250+0100"
+            }
+        ],
+        "name": "Manchester United",
+        "id": "1",
+        "shortName": "Man Utd",
+        "goals": [
+            {
+                "goalType": "Goal",
+                "period": "SecondHalf",
+                "assistPlayerId": "1851",
+                "time": "90",
+                "playerId": "363",
+                "timestamp": "20050704T161236+0100"
+            },
+            {
+                "goalType": "Goal",
+                "period": "SecondHalf",
+                "assistPlayerId": null,
+                "time": "81",
+                "playerId": "1818",
+                "timestamp": "20050704T161235+0100"
+            }
+        ]
+    }
+}
