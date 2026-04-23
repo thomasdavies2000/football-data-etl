@@ -1,0 +1,673 @@
+[
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 24,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2011-07-01",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "1",
+            "seasonId": "2014",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Tottenham Hotspur",
+            "id": "6",
+            "shortName": "Spurs"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "6",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 24,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2011-07-01",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "2",
+            "seasonId": "2014",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Tottenham Hotspur",
+            "id": "6",
+            "shortName": "Spurs"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "6",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 24,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2011-07-01",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "6",
+            "seasonId": "2013",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Tottenham Hotspur",
+            "id": "6",
+            "shortName": "Spurs"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "6",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 24,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2011-07-01",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "6",
+            "seasonId": "2014",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Tottenham Hotspur",
+            "id": "6",
+            "shortName": "Spurs"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "6",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 19,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "1997-12-19",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "10",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Liverpool",
+            "id": "14",
+            "shortName": "Liverpool"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "14",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 19,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "1997-12-19",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "16",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Liverpool",
+            "id": "14",
+            "shortName": "Liverpool"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "14",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 1,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2000-11-03",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "2",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Blackburn Rovers",
+            "id": "5",
+            "shortName": "Blackburn"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "5",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 1,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2008-07-26",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "2008",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Aston Villa",
+            "id": "7",
+            "shortName": "Aston Villa"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "7",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 1,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2008-07-26",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "2009",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Aston Villa",
+            "id": "7",
+            "shortName": "Aston Villa"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "7",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 1,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2008-07-26",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "2010",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Aston Villa",
+            "id": "7",
+            "shortName": "Aston Villa"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "7",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 24,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2011-07-01",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "2011",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Tottenham Hotspur",
+            "id": "6",
+            "shortName": "Spurs"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "6",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 24,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2011-07-01",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "2012",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Tottenham Hotspur",
+            "id": "6",
+            "shortName": "Spurs"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "6",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 24,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2011-07-01",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "2013",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Tottenham Hotspur",
+            "id": "6",
+            "shortName": "Spurs"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "6",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 24,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2011-07-01",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "2014",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Tottenham Hotspur",
+            "id": "6",
+            "shortName": "Spurs"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "6",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 1,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2000-11-03",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "3",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Blackburn Rovers",
+            "id": "5",
+            "shortName": "Blackburn"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "5",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 1,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2000-11-03",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "4",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Blackburn Rovers",
+            "id": "5",
+            "shortName": "Blackburn"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "5",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 1,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2000-11-03",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "5",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Blackburn Rovers",
+            "id": "5",
+            "shortName": "Blackburn"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "5",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 1,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2000-11-03",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "6",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Blackburn Rovers",
+            "id": "5",
+            "shortName": "Blackburn"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "5",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 1,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2000-11-03",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "7",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Blackburn Rovers",
+            "id": "5",
+            "shortName": "Blackburn"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "5",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "shirtNum": 1,
+        "weight": 92,
+        "dates": {
+            "joinedClub": "2000-11-03",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "8",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Blackburn Rovers",
+            "id": "5",
+            "shortName": "Blackburn"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "5",
+        "height": 191
+    },
+    {
+        "country": {
+            "isoCode": "US",
+            "country": "United States",
+            "demonym": "American"
+        },
+        "name": {
+            "last": "Friedel",
+            "display": "Brad Friedel",
+            "first": "Brad"
+        },
+        "weight": 92,
+        "dates": {
+            "joinedClub": "1997-12-19",
+            "birth": "1971-05-18"
+        },
+        "id": {
+            "competitionId": "8",
+            "seasonId": "9",
+            "playerId": "1803"
+        },
+        "team": {
+            "loan": 0,
+            "name": "Liverpool",
+            "id": "14",
+            "shortName": "Liverpool"
+        },
+        "position": "Goalkeeper",
+        "teamActiveSquad": "14",
+        "height": 191
+    }
+]
