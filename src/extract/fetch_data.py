@@ -7,9 +7,9 @@ class FootballDataFetcher:
     def __init__(self):
         pass
 
-    def fetch_player_data(self, id):
+    def fetch_player_data(self, id) -> list | None: 
         players_url = f"{self.base_url}/api/v2/players/{id}"
-
+        
         print(f"Fetching football data from {players_url}...")
 
         # make the API call and return the data
