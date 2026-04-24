@@ -30,7 +30,7 @@ class FootballDataFetcher:
             print(f"An unexpected error occurred: {e}")
             return None
         
-    def fetch_match_events_data(self, id) -> list | None:
+    def fetch_match_events_data(self, id) -> dict | None:
         
         match_events_url = f"{self.base_url}/api/v1/matches/{id}/events"
         print(f"Fetching football data from {match_events_url}...")
