@@ -3,13 +3,13 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from extract.fetch_data import FootballDataFetcher
+from extract.fetch_data import FootballDataExtractor
 from transform.transform_data import FootballDataTransformer
 
 def main():
     print("main...")
 
-    fetcher = FootballDataFetcher()
+    fetcher = FootballDataExtractor()
     player_data = fetcher.fetch_player_data(1803)
     print("Raw playerdata:", player_data)
 
