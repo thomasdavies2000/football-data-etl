@@ -1,7 +1,11 @@
 from unittest.mock import patch, Mock
 import json
+import sys
+import os
 
-from src.extract.fetch_data import FootballDataFetcher
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
+from extract.fetch_data import FootballDataFetcher
 
 
 def test_fetch_match_events_returns_dict():
@@ -12,7 +16,7 @@ def test_fetch_match_events_returns_dict():
     mock_response.status_code = 200
     mock_response.json.return_value = mock_data
 
-    with patch("src.extract.fetch_data.requests.get", return_value=mock_response):
+    with patch("extract.fetch_data.requests.get", return_value=mock_response):
         fetcher = FootballDataFetcher()
         result = fetcher.fetch_match_events_data(12345)
         assert isinstance(result, dict)
@@ -26,7 +30,7 @@ def test_fetch_player_data_returns_list():
     mock_response.status_code = 200
     mock_response.json.return_value = mock_data
 
-    with patch("src.extract.fetch_data.requests.get", return_value=mock_response):
+    with patch("extract.fetch_data.requests.get", return_value=mock_response):
         fetcher = FootballDataFetcher()
         result = fetcher.fetch_player_data(1803)
         assert isinstance(result, list)
