@@ -101,3 +101,26 @@ class FootballDataExtractor:
         except requests.exceptions.RequestException as e:
             logger.error(f"An unexpected error occurred: {e}")
             return None
+        
+    def fetch_club_squad_data(self, id, season, competition=8) -> dict | None:
+        # example url https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v2/competitions/8/seasons/2010/teams/43/squad
+        club_squad_url = f"{self.base_url}/api/v2/competitions/{competition}/seasons/{season}/teams/{id}/squad"
+        logger.info(f"Fetching football data from {club_squad_url}...")
+
+        # make the API call and return the data
+        try:
+            response = requests.get(club_squad_url)
+            if response.status_code == 200:
+                return response.json()
+            else:            
+                logger.error(f"Failed to fetch data: {response.status_code}")
+                return None
+        except requests.exceptions.Timeout:
+            logger.error("Request timed out")
+            return None
+        except requests.exceptions.ConnectionError:
+            logger.error("Failed to connect to the server")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"An unexpected error occurred: {e}")
+            return None
