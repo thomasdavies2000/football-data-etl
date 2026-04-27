@@ -114,3 +114,208 @@ CREATE TABLE quality.issues (
 ```
 
 The transform layer would write a row here instead of (or in addition to) logging, making quality issues queryable and persistent across runs.
+
+
+## Connecting to local db and example queries:
+
+docker exec -it football-data-etl-postgres-1 psql -U postgres -d football_etl
+
+Dimensions — check what's been seeded:                                                                                                    
+  SELECT * FROM dim.club;                                                                                                                   
+  SELECT * FROM dim.competition;                                                                                                            
+  SELECT * FROM dim.season;                                                                                                                 
+  SELECT * FROM dim.player;                                                                                                                 
+                                                                                                                                            
+  Raw responses — inspect what came back from the API:                                                                                      
+  SELECT endpoint, entity_id, fetched_at FROM raw.api_response;                                                                             
+                                                                                                                                            
+  Match events — all goals from a match:                                                                                                    
+  SELECT * FROM fact.match_event WHERE event_type = 'goal';                                                                                 
+                                                                                                                                            
+  Match events — join to player and club names:                                                                                             
+  SELECT                                                                                                                                    
+      me.match_id,
+      me.event_type,                                                                                                                        
+      me.time,                                                                                                                            
+      me.period,                                                                                                                            
+      p.display_name AS player,
+      c.name AS team                                                                                                                        
+  FROM fact.match_event me                                                                                                                  
+  LEFT JOIN dim.player p ON p.player_id = me.player_id
+  LEFT JOIN dim.club c ON c.id = me.team_id                                                                                                 
+  ORDER BY me.match_id, me.time;                                                                                                          
+                                                                                                                                            
+  Lineup — who started vs came off the bench:
+  SELECT                                                                                                                                    
+      ml.match_id,                                                                                                                        
+      p.display_name AS player,                                                                                                             
+      c.name AS team,                                                                                                                     
+      ml.position,                                                                                                                          
+      ml.is_starter
+  FROM fact.match_lineup ml                                                                                                                 
+  JOIN dim.player p ON p.player_id = ml.player_id                                                                                         
+  JOIN dim.club c ON c.id = ml.team_id           
+  ORDER BY ml.match_id, ml.team_id, ml.is_starter DESC;                                                                                     
+   
+  Quality check — events with missing player IDs:                                                                                           
+  SELECT * FROM fact.match_event WHERE player_id IS NULL;                                                                                 
+                                                                                                                                            
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯  
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ? for shortcuts                                                                                                           ⧉ In README.md
+                                                                                                                                            
+  SELECT endpoint, entity_id, fetched_at FROM raw.api_response;
+
+  Match events — all goals from a match:
+  SELECT * FROM fact.match_event WHERE event_type = 'goal';
+
+  Match events — join to player and club names:
+  SELECT
+      me.match_id,
+      me.event_type,
+      me.time,
+      me.period,
+      p.display_name AS player,
+      c.name AS team
+  FROM fact.match_event me
+  LEFT JOIN dim.player p ON p.player_id = me.player_id
+  LEFT JOIN dim.club c ON c.id = me.team_id
+  ORDER BY me.match_id, me.time;
+
+  Lineup — who started vs came off the bench:
+  SELECT
+      ml.match_id,
+      p.display_name AS player,
+      c.name AS team,
+      ml.position,
+      ml.is_starter
+  FROM fact.match_lineup ml
+  JOIN dim.player p ON p.player_id = ml.player_id
+  JOIN dim.club c ON c.id = ml.team_id
+  ORDER BY ml.match_id, ml.team_id, ml.is_starter DESC;
+
+  Quality check — events with missing player IDs:
+  SELECT * FROM fact.match_event WHERE player_id IS NULL;
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ? for shortcuts                                                                                                           ⧉ In README.md
+  SELECT
+      ml.match_id,
+      p.display_name AS player,
+      c.name AS team,
+      ml.position,
+      ml.is_starter
+  FROM fact.match_lineup ml
+  JOIN dim.player p ON p.player_id = ml.player_id
+  JOIN dim.club c ON c.id = ml.team_id
+  ORDER BY ml.match_id, ml.team_id, ml.is_starter DESC;
+
+  Quality check — events with missing player IDs:
+  SELECT * FROM fact.match_event WHERE player_id IS NULL;
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ? for shortcuts                                                                                                           ⧉ In README.md
+      ml.position,
+      ml.is_starter
+  FROM fact.match_lineup ml
+  JOIN dim.player p ON p.player_id = ml.player_id
+  JOIN dim.club c ON c.id = ml.team_id
+  ORDER BY ml.match_id, ml.team_id, ml.is_starter DESC;
+
+  Quality check — events with missing player IDs:
+  SELECT * FROM fact.match_event WHERE player_id IS NULL;
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ? for shortcuts                                                                                                           ⧉ In README.md
+      ml.is_starter
+  FROM fact.match_lineup ml
+  JOIN dim.player p ON p.player_id = ml.player_id
+  JOIN dim.club c ON c.id = ml.team_id
+  ORDER BY ml.match_id, ml.team_id, ml.is_starter DESC;
+
+  Quality check — events with missing player IDs:
+  SELECT * FROM fact.match_event WHERE player_id IS NULL;
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ? for shortcuts                                                                                                           ⧉ In README.md
+  FROM fact.match_lineup ml
+  JOIN dim.player p ON p.player_id = ml.player_id
+  JOIN dim.club c ON c.id = ml.team_id
+  ORDER BY ml.match_id, ml.team_id, ml.is_starter DESC;
+
+  Quality check — events with missing player IDs:
+  SELECT * FROM fact.match_event WHERE player_id IS NULL;
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ? for shortcuts                                                                                                           ⧉ In README.md
+  JOIN dim.player p ON p.player_id = ml.player_id
+  JOIN dim.club c ON c.id = ml.team_id
+  ORDER BY ml.match_id, ml.team_id, ml.is_starter DESC;
+
+  Quality check — events with missing player IDs:
+  SELECT * FROM fact.match_event WHERE player_id IS NULL;
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ? for shortcuts                                                                                                           ⧉ In README.md
+  Quality check — events with missing player IDs:
+  SELECT * FROM fact.match_event WHERE player_id IS NULL;
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ? for shortcuts                                                                                                           ⧉ In README.md
+  SELECT * FROM fact.match_event WHERE player_id IS NULL;
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ? for shortcuts                                                                                                           ⧉ In README.md
+
+  Lineup — who started vs came off the bench:
+  SELECT
+      ml.match_id,
+      p.display_name AS player,
+      c.name AS team,
+      ml.position,
+      ml.is_starter
+  FROM fact.match_lineup ml
+  JOIN dim.player p ON p.player_id = ml.player_id
+  JOIN dim.club c ON c.id = ml.team_id
+  ORDER BY ml.match_id, ml.team_id, ml.is_starter DESC;
+
+  Quality check — events with missing player IDs:
+  SELECT * FROM fact.match_event WHERE player_id IS NULL;
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ? for shortcuts                                                                                                           ⧉ In README.md
+  ORDER BY me.match_id, me.time;
+
+  Lineup — who started vs came off the bench:
+  SELECT
+      ml.match_id,
+      p.display_name AS player,
+      c.name AS team,
+      ml.position,
+      ml.is_starter
+  FROM fact.match_lineup ml
+  JOIN dim.player p ON p.player_id = ml.player_id
+  JOIN dim.club c ON c.id = ml.team_id
+  ORDER BY ml.match_id, ml.team_id, ml.is_starter DESC;
+
+  Quality check — events with missing player IDs:
+  SELECT * FROM fact.match_event WHERE player_id IS NULL;
