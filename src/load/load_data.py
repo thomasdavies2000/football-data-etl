@@ -154,6 +154,8 @@ class FootballDataLoader:
         logger.info(f"Loaded {len(events)} events for match {match_id}")
 
     def load_match_lineup(self, lineup_rows: list[dict]) -> None:
+        if not lineup_rows:
+            return
         with self.conn.cursor() as cur:
             for row in lineup_rows:
                 cur.execute(

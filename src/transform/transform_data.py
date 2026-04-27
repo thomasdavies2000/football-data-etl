@@ -1,5 +1,9 @@
 from datetime import datetime
 
+from logs.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 def _parse_timestamp(ts: str | None) -> datetime | None:
     if not ts:
@@ -54,11 +58,13 @@ class FootballDataTransformer:
             team_id = int(team["id"])
 
             for goal in team.get("goals", []):
+                if not goal.get("playerId"):
+                    logger.warning(f"match {match_id}: goal missing playerId")
                 events.append({
                     "match_id": match_id,
                     "team_id": team_id,
                     "event_type": "goal",
-                    "player_id": int(goal["playerId"]),
+                    "player_id": int(goal["playerId"]) if goal.get("playerId") else None,
                     "period": goal.get("period"),
                     "time": int(goal["time"]) if goal.get("time") else None,
                     "occurred_at": _parse_timestamp(goal.get("timestamp")),
@@ -69,11 +75,13 @@ class FootballDataTransformer:
                 })
 
             for card in team.get("cards", []):
+                if not card.get("playerId"):
+                    logger.warning(f"match {match_id}: card missing playerId")
                 events.append({
                     "match_id": match_id,
                     "team_id": team_id,
                     "event_type": "card",
-                    "player_id": int(card["playerId"]),
+                    "player_id": int(card["playerId"]) if card.get("playerId") else None,
                     "period": card.get("period"),
                     "time": int(card["time"]) if card.get("time") else None,
                     "occurred_at": _parse_timestamp(card.get("timestamp")),
@@ -84,18 +92,22 @@ class FootballDataTransformer:
                 })
 
             for sub in team.get("subs", []):
+                if not sub.get("playerOnId"):
+                    logger.warning(f"match {match_id}: sub missing playerOnId")
+                if not sub.get("playerOffId"):
+                    logger.warning(f"match {match_id}: sub missing playerOffId")
                 events.append({
                     "match_id": match_id,
                     "team_id": team_id,
                     "event_type": "sub",
-                    "player_id": int(sub["playerOnId"]),
+                    "player_id": int(sub["playerOnId"]) if sub.get("playerOnId") else None,
                     "period": sub.get("period"),
                     "time": int(sub["time"]) if sub.get("time") else None,
                     "occurred_at": _parse_timestamp(sub.get("timestamp")),
                     "goal_type": None,
                     "assist_player_id": None,
                     "card_type": None,
-                    "player_off_id": int(sub["playerOffId"]),
+                    "player_off_id": int(sub["playerOffId"]) if sub.get("playerOffId") else None,
                 })
 
         return events

@@ -91,3 +91,26 @@ FK constraints mean dimensions must be populated before facts. Within that, the 
 ### Foreign keys
 
 All fact tables reference dimension tables via FK constraints, so referential integrity is enforced at the database level.
+
+### Data quality
+
+Unexpected nulls in the transform layer (e.g. a card with no `playerId`) are logged as warnings. `assistPlayerId` being null is not flagged — it is expected, since not all goals have an assist.
+
+## Potential improvements
+
+### Persistent quality issue tracking
+
+Currently data quality problems are surfaced as log warnings. A more robust approach would be a dedicated `quality.issues` table:
+
+```sql
+CREATE TABLE quality.issues (
+    id          SERIAL PRIMARY KEY,
+    detected_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    entity_type TEXT NOT NULL,  -- 'match_event', 'lineup', etc.
+    entity_id   TEXT NOT NULL,  -- match_id or other identifier
+    field       TEXT NOT NULL,  -- the field that failed
+    issue       TEXT NOT NULL   -- human-readable description
+);
+```
+
+The transform layer would write a row here instead of (or in addition to) logging, making quality issues queryable and persistent across runs.

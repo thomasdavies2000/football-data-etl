@@ -33,6 +33,31 @@ class FootballDataExtractor:
             logger.error(f"An unexpected error occurred: {e}")
             return None
         
+    def fetch_matches_by_gameweek_data(self, season, matchweek, competition=8) -> list | None:
+        # example url: https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v2/matches?competition=8&season=2025&matchweek=34&_limit=20
+        # another example, for some reason this is 1992/1993: https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v2/matches?competition=8&season=11
+
+        matches_by_gameweek_url = f"{self.base_url}/api/v2/matches?competition={competition}&season={season}&matchweek={matchweek}&_limit=20"
+        logger.info(f"Fetching football data from {matches_by_gameweek_url}...")
+
+        # make the API call and return the data
+        try:
+            response = requests.get(matches_by_gameweek_url)
+            if response.status_code == 200:
+                return response.json()
+            else:            
+                logger.error(f"Failed to fetch data: {response.status_code}")
+                return None
+        except requests.exceptions.Timeout:
+            logger.error("Request timed out")
+            return None
+        except requests.exceptions.ConnectionError:
+            logger.error("Failed to connect to the server")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"An unexpected error occurred: {e}")
+            return None
+                
     def fetch_match_events_data(self, id) -> dict | None:
         
         match_events_url = f"{self.base_url}/api/v1/matches/{id}/events"
