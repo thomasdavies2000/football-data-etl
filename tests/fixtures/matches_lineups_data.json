@@ -1,0 +1,230 @@
+{
+    "home_team": {
+        "players": [
+            {
+                "firstName": "Dmitri",
+                "lastName": "Kharin",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "2146",
+                "position": "Goalkeeper"
+            },
+            {
+                "firstName": "Steve",
+                "lastName": "Clarke",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "15016",
+                "position": "Defender"
+            },
+            {
+                "firstName": "Nigel",
+                "lastName": "Spackman",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "7991",
+                "position": "Defender"
+            },
+            {
+                "firstName": "Dennis",
+                "lastName": "Wise",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "1681",
+                "position": "Midfielder"
+            },
+            {
+                "firstName": "David",
+                "lastName": "Hopkin",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "719",
+                "position": "Substitute"
+            },
+            {
+                "firstName": "Gareth",
+                "lastName": "Hall",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "1284",
+                "position": "Defender"
+            },
+            {
+                "firstName": "Darren",
+                "lastName": "Barnard",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "1069",
+                "position": "Defender"
+            },
+            {
+                "firstName": "Andy",
+                "lastName": "Townsend",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "2387",
+                "position": "Midfielder"
+            },
+            {
+                "firstName": "David",
+                "lastName": "Lee",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "16999",
+                "position": "Defender"
+            },
+            {
+                "firstName": "Erland",
+                "lastName": "Johnsen",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "16983",
+                "position": "Defender"
+            },
+            {
+                "firstName": "John",
+                "lastName": "Spencer",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "2230",
+                "position": "Forward"
+            },
+            {
+                "firstName": "Tony",
+                "lastName": "Cascarino",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "16919",
+                "position": "Forward"
+            }
+        ],
+        "teamId": "8",
+        "formation": {},
+        "managers": [
+            {
+                "firstName": "David",
+                "lastName": "Webb",
+                "id": "37355",
+                "type": "Manager"
+            }
+        ]
+    },
+    "away_team": {
+        "players": [
+            {
+                "firstName": "Peter",
+                "lastName": "Atherton",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "1944",
+                "position": "Defender"
+            },
+            {
+                "firstName": "John",
+                "lastName": "Williams",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "2748",
+                "position": "Defender"
+            },
+            {
+                "firstName": "Terry",
+                "lastName": "Fleming",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "2813",
+                "position": "Midfielder"
+            },
+            {
+                "firstName": "Roy",
+                "lastName": "Wegerle",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "16191",
+                "position": "Forward"
+            },
+            {
+                "firstName": "Phil",
+                "lastName": "Babb",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "1791",
+                "position": "Defender"
+            },
+            {
+                "firstName": "Lee",
+                "lastName": "Hurst",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "16974",
+                "position": "Midfielder"
+            },
+            {
+                "firstName": "Brian",
+                "lastName": "Borrows",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "16909",
+                "position": "Substitute"
+            },
+            {
+                "firstName": "Willie",
+                "lastName": "Boland",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "3148",
+                "position": "Substitute"
+            },
+            {
+                "firstName": "David",
+                "lastName": "Busst",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "16916",
+                "position": "Defender"
+            },
+            {
+                "firstName": "David",
+                "lastName": "Rennie",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "17060",
+                "position": "Defender"
+            },
+            {
+                "firstName": "Micky",
+                "lastName": "Gynn",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "16960",
+                "position": "Midfielder"
+            },
+            {
+                "firstName": "Jonathan",
+                "lastName": "Gould",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "2147",
+                "position": "Goalkeeper"
+            },
+            {
+                "firstName": "Mick",
+                "lastName": "Quinn",
+                "shirtNum": "99",
+                "isCaptain": false,
+                "id": "17055",
+                "position": "Forward"
+            }
+        ],
+        "teamId": "9",
+        "formation": {},
+        "managers": [
+            {
+                "firstName": "Bobby",
+                "lastName": "Gould",
+                "id": "37822",
+                "type": "Manager"
+            }
+        ]
+    }
+}
