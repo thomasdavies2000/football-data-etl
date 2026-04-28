@@ -6,6 +6,8 @@ logger = get_logger(__name__)
 # Some early seasons use an opaque numeric ID in the API rather than the calendar year.
 SEASON_ID_MAP = {
     1992: 11,
+    1993: 12,
+    1994: 13,
 }
 
 

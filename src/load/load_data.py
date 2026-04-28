@@ -34,6 +34,20 @@ class FootballDataLoader:
             )
         logger.info(f"Upserted competition {competition['id']}")
 
+    def load_match(self, match: dict) -> None:
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO dim.match (id, season_id, competition_id, home_team_id, away_team_id, kickoff, matchweek, home_score, away_score)
+                VALUES (%(id)s, %(season_id)s, %(competition_id)s, %(home_team_id)s, %(away_team_id)s, %(kickoff)s, %(matchweek)s, %(home_score)s, %(away_score)s)
+                ON CONFLICT (id) DO UPDATE SET
+                    home_score = EXCLUDED.home_score,
+                    away_score = EXCLUDED.away_score
+                """,
+                match,
+            )
+        logger.info(f"Upserted match {match['id']}")
+
     def load_season(self, season: dict) -> None:
         with self.conn.cursor() as cur:
             cur.execute(
@@ -132,6 +146,16 @@ class FootballDataLoader:
                 },
             )
         logger.info(f"Upserted player season {player_season['player_id']}/{player_season['season_id']}")
+
+    def get_season_ids(self) -> set[int]:
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT id FROM dim.season")
+            return {row[0] for row in cur.fetchall()}
+
+    def get_unenriched_player_ids(self) -> list[int]:
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT player_id FROM dim.player WHERE country_iso IS NULL")
+            return [row[0] for row in cur.fetchall()]
 
     def load_match_events(self, match_id: int, events: list[dict]) -> None:
         with self.conn.cursor() as cur:

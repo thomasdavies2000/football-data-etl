@@ -1,3 +1,4 @@
+import argparse
 import sys
 import os
 
@@ -15,20 +16,33 @@ _SEASON_LABEL = {str(v): str(k) for k, v in SEASON_ID_MAP.items()}
 
 load_dotenv()
 
-SEASON = 1992
-MATCHWEEK = 1
-
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--season", type=int, required=True)
+    parser.add_argument("--matchweek", type=int)
+    parser.add_argument(
+        "--only",
+        choices=["load", "enrich"],
+        help="Run only the load or enrich phase (default: both)",
+    )
+    args = parser.parse_args()
+
+    if args.season not in SEASON_ID_MAP and args.matchweek is None:
+        parser.error("--matchweek is required for seasons not in SEASON_ID_MAP")
+
     fetcher = FootballDataExtractor()
     transformer = FootballDataTransformer()
 
     with get_connection() as conn:
         loader = FootballDataLoader(conn)
-        if SEASON in SEASON_ID_MAP:
-            _load_season(fetcher, transformer, loader, SEASON)
-        else:
-            _load_gameweek(fetcher, transformer, loader, SEASON, MATCHWEEK)
+        if args.only != "enrich":
+            if args.season in SEASON_ID_MAP:
+                _load_season(fetcher, transformer, loader, args.season)
+            else:
+                _load_gameweek(fetcher, transformer, loader, args.season, args.matchweek)
+        if args.only != "load":
+            _enrich_players(fetcher, transformer, loader)
 
 
 def _load_gameweek(
@@ -52,6 +66,7 @@ def _load_gameweek(
             team = match[side]
             loader.load_club({"id": team["id"], "name": team["name"], "shortName": team.get("shortName")})
 
+        loader.load_match(_build_match_record(match))
         _load_match(fetcher, transformer, loader, int(match["matchId"]))
 
 
@@ -76,7 +91,22 @@ def _load_season(
             team = match[side]
             loader.load_club({"id": team["id"], "name": team["name"], "shortName": team.get("shortName")})
 
+        loader.load_match(_build_match_record(match))
         _load_match(fetcher, transformer, loader, int(match["matchId"]))
+
+
+def _build_match_record(match: dict) -> dict:
+    return {
+        "id": int(match["matchId"]),
+        "season_id": int(match["season"]),
+        "competition_id": int(match["competitionId"]),
+        "home_team_id": int(match["homeTeam"]["id"]),
+        "away_team_id": int(match["awayTeam"]["id"]),
+        "kickoff": match.get("kickoff"),
+        "matchweek": int(match["phase"]) if match.get("phase") else None,
+        "home_score": match["homeTeam"].get("score"),
+        "away_score": match["awayTeam"].get("score"),
+    }
 
 
 def _load_match(
@@ -98,6 +128,25 @@ def _load_match(
         loader.load_raw("match_events", match_id, raw_events)
         events = transformer.transform_match_events(match_id, raw_events)
         loader.load_match_events(match_id, events)
+
+
+def _enrich_players(
+    fetcher: FootballDataExtractor,
+    transformer: FootballDataTransformer,
+    loader: FootballDataLoader,
+) -> None:
+    known_seasons = loader.get_season_ids()
+    player_ids = loader.get_unenriched_player_ids()
+    for player_id in player_ids:
+        raw = fetcher.fetch_player_data(player_id)
+        if not raw:
+            continue
+        loader.load_raw("player", player_id, raw)
+        player, player_seasons = transformer.transform_player(raw)
+        loader.load_player(player)
+        for ps in player_seasons:
+            if int(ps["season_id"]) in known_seasons:
+                loader.load_player_season(ps)
 
 
 def _seed_players_from_lineup(loader: FootballDataLoader, raw_lineups: dict) -> None:
