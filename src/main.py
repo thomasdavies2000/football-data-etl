@@ -5,14 +5,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from dotenv import load_dotenv
 
-from extract.fetch_data import FootballDataExtractor
+from extract.fetch_data import FootballDataExtractor, SEASON_ID_MAP
 from transform.transform_data import FootballDataTransformer
 from load.db import get_connection
 from load.load_data import FootballDataLoader
 
+# Inverse of SEASON_ID_MAP: API season ID (str) -> calendar year (str) for display
+_SEASON_LABEL = {str(v): str(k) for k, v in SEASON_ID_MAP.items()}
+
 load_dotenv()
 
-SEASON = 2024
+SEASON = 1992
 MATCHWEEK = 1
 
 
@@ -22,7 +25,10 @@ def main():
 
     with get_connection() as conn:
         loader = FootballDataLoader(conn)
-        _load_gameweek(fetcher, transformer, loader, SEASON, MATCHWEEK)
+        if SEASON in SEASON_ID_MAP:
+            _load_season(fetcher, transformer, loader, SEASON)
+        else:
+            _load_gameweek(fetcher, transformer, loader, SEASON, MATCHWEEK)
 
 
 def _load_gameweek(
@@ -41,6 +47,30 @@ def _load_gameweek(
     for match in raw.get("data", []):
         loader.load_competition({"id": match["competitionId"], "name": match["competition"]})
         loader.load_season({"id": match["season"], "label": match["season"]})
+
+        for side in ("homeTeam", "awayTeam"):
+            team = match[side]
+            loader.load_club({"id": team["id"], "name": team["name"], "shortName": team.get("shortName")})
+
+        _load_match(fetcher, transformer, loader, int(match["matchId"]))
+
+
+def _load_season(
+    fetcher: FootballDataExtractor,
+    transformer: FootballDataTransformer,
+    loader: FootballDataLoader,
+    season: int,
+) -> None:
+    matches = fetcher.fetch_matches_by_season_data(season)
+    if not matches:
+        return
+
+    loader.load_raw("matches_by_season", str(season), matches)
+
+    for match in matches:
+        loader.load_competition({"id": match["competitionId"], "name": match["competition"]})
+        season_id = match["season"]
+        loader.load_season({"id": season_id, "label": _SEASON_LABEL.get(season_id, season_id)})
 
         for side in ("homeTeam", "awayTeam"):
             team = match[side]
