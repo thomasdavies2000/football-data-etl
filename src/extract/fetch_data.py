@@ -1,6 +1,8 @@
 import requests
 from logs.logger import get_logger
 
+_TIMEOUT = 30
+
 logger = get_logger(__name__)
 
 # Some early seasons use an opaque numeric ID in the API rather than the calendar year.

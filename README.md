@@ -2,6 +2,38 @@
 
 An ETL pipeline that extracts Premier League data from the Premier League SDP API and loads it into a PostgreSQL database.
 
+## Pipeline
+
+Two phases run in sequence. The **load** phase fetches match data; the **enrich** phase fills in full player details for any player discovered during the load.
+
+```mermaid
+flowchart TD
+    API["Premier League SDP API"]
+
+    subgraph load ["Load phase — per match"]
+        L1["fetch matches\n(by season or gameweek)"]
+        L2["fetch lineups"]
+        L3["fetch events"]
+        L1 --> L2 & L3
+    end
+
+    subgraph enrich ["Enrich phase — per player"]
+        E1["fetch player details\n(unenriched players only)"]
+    end
+
+    subgraph pg ["PostgreSQL"]
+        RAW["raw.api_response"]
+        DIM["dim.*\ncompetition · season · club · player"]
+        FACT["fact.*\nmatch_lineup · match_event · player_season"]
+    end
+
+    API --> L1 & L2 & L3 & E1
+    L1 --> RAW & DIM
+    L2 --> RAW & FACT
+    L3 --> RAW & FACT
+    E1 --> RAW & DIM & FACT
+```
+
 ## Project structure
 
 ```
@@ -58,6 +90,22 @@ Three Postgres schemas separate concerns:
 | `fact` | Fact tables: high-cardinality, time-bound data (player seasons, match events, lineups) |
 
 This follows a **star schema** pattern, with dimension tables as the reference core and fact tables recording what happened.
+
+```mermaid
+erDiagram
+    competition ||--o{ match : ""
+    season ||--o{ match : ""
+    club ||--o{ match : "home"
+    club ||--o{ match : "away"
+    match ||--o{ match_event : ""
+    match ||--o{ match_lineup : ""
+    player ||--o{ match_event : ""
+    player ||--o{ match_lineup : ""
+    player ||--o{ player_season : ""
+    club ||--o{ player_season : ""
+    season ||--o{ player_season : ""
+    competition ||--o{ player_season : ""
+```
 
 ### Primary keys: API integers
 
@@ -165,59 +213,3 @@ Dimensions — check what's been seeded:
   FROM raw.api_response
   WHERE endpoint = 'matches_by_season'
   ORDER BY season;
-
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-❯  
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  ? for shortcuts                                                                                                           ⧉ In README.md
-                                                                                                                                            
-  SELECT endpoint, entity_id, fetched_at FROM raw.api_response;
-
-  Match events — all goals from a match:
-  SELECT * FROM fact.match_event WHERE event_type = 'goal';
-
-  Match events — join to player and club names:
-  SELECT
-      me.match_id,
-      me.event_type,
-      me.time,
-      me.period,
-      p.display_name AS player,
-      c.name AS team
-  FROM fact.match_event me
-  LEFT JOIN dim.player p ON p.player_id = me.player_id
-  LEFT JOIN dim.club c ON c.id = me.team_id
-  ORDER BY me.match_id, me.time;
-
-  Lineup — who started vs came off the bench:
-  SELECT
-      ml.match_id,
-      p.display_name AS player,
-      c.name AS team,
-      ml.position,
-      ml.is_starter
-  FROM fact.match_lineup ml
-  JOIN dim.player p ON p.player_id = ml.player_id
-  JOIN dim.club c ON c.id = ml.team_id
-  ORDER BY ml.match_id, ml.team_id, ml.is_starter DESC;
-
-  Quality check — events with missing player IDs:
-  SELECT * FROM fact.match_event WHERE player_id IS NULL;
-
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-❯ 
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  ? for shortcuts                                                                                                           ⧉ In README.md
-  SELECT
-      ml.match_id,
-      p.display_name AS player,
-      c.name AS team,
-      ml.position,
-      ml.is_starter
-  FROM fact.match_lineup ml
-  JOIN dim.player p ON p.player_id = ml.player_id
-  JOIN dim.club c ON c.id = ml.team_id
-  ORDER BY ml.match_id, ml.team_id, ml.is_starter DESC;
-
-  Quality check — events with missing player IDs:
-  SELECT * FROM fact.match_event WHERE player_id IS NULL;
