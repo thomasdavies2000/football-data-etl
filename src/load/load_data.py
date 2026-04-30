@@ -1,5 +1,6 @@
 import json
 
+from psycopg2.extras import execute_values
 from logs.logger import get_logger
 
 logger = get_logger(__name__)
@@ -160,42 +161,43 @@ class FootballDataLoader:
     def load_match_events(self, match_id: int, events: list[dict]) -> None:
         with self.conn.cursor() as cur:
             cur.execute("DELETE FROM fact.match_event WHERE match_id = %s", (match_id,))
-            for event in events:
-                cur.execute(
-                    """
-                    INSERT INTO fact.match_event (
-                        match_id, team_id, event_type, player_id, period, time, occurred_at,
-                        goal_type, assist_player_id, card_type, player_off_id
+            execute_values(
+                cur,
+                """
+                INSERT INTO fact.match_event (
+                    match_id, team_id, event_type, player_id, period, time, occurred_at,
+                    goal_type, assist_player_id, card_type, player_off_id
+                ) VALUES %s
+                """,
+                [
+                    (
+                        e["match_id"], e["team_id"], e["event_type"], e["player_id"],
+                        e["period"], e["time"], e["occurred_at"],
+                        e["goal_type"], e["assist_player_id"], e["card_type"], e["player_off_id"],
                     )
-                    VALUES (
-                        %(match_id)s, %(team_id)s, %(event_type)s, %(player_id)s,
-                        %(period)s, %(time)s, %(occurred_at)s,
-                        %(goal_type)s, %(assist_player_id)s, %(card_type)s, %(player_off_id)s
-                    )
-                    """,
-                    event,
-                )
+                    for e in events
+                ],
+            )
         logger.info(f"Loaded {len(events)} events for match {match_id}")
 
     def load_match_lineup(self, lineup_rows: list[dict]) -> None:
         if not lineup_rows:
             return
         with self.conn.cursor() as cur:
-            for row in lineup_rows:
-                cur.execute(
-                    """
-                    INSERT INTO fact.match_lineup (
-                        match_id, team_id, player_id, is_starter, shirt_num, position
-                    )
-                    VALUES (
-                        %(match_id)s, %(team_id)s, %(player_id)s,
-                        %(is_starter)s, %(shirt_num)s, %(position)s
-                    )
-                    ON CONFLICT (match_id, team_id, player_id) DO UPDATE SET
-                        is_starter = EXCLUDED.is_starter,
-                        shirt_num = EXCLUDED.shirt_num,
-                        position = EXCLUDED.position
-                    """,
-                    row,
-                )
+            execute_values(
+                cur,
+                """
+                INSERT INTO fact.match_lineup (
+                    match_id, team_id, player_id, is_starter, shirt_num, position
+                ) VALUES %s
+                ON CONFLICT (match_id, team_id, player_id) DO UPDATE SET
+                    is_starter = EXCLUDED.is_starter,
+                    shirt_num = EXCLUDED.shirt_num,
+                    position = EXCLUDED.position
+                """,
+                [
+                    (r["match_id"], r["team_id"], r["player_id"], r["is_starter"], r["shirt_num"], r["position"])
+                    for r in lineup_rows
+                ],
+            )
         logger.info(f"Upserted {len(lineup_rows)} lineup rows for match {lineup_rows[0]['match_id']}")

@@ -1,17 +1,17 @@
 import argparse
-import sys
-import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from env import load_env
 from extract.fetch_data import FootballDataExtractor, SEASON_ID_MAP
 from transform.transform_data import FootballDataTransformer
 from db import get_connection
 from load.load_data import FootballDataLoader
+from logs.logger import get_logger
 
-# Inverse of SEASON_ID_MAP: API season ID (str) -> calendar year (str) for display
+logger = get_logger(__name__)
+
 _SEASON_LABEL = {str(v): str(k) for k, v in SEASON_ID_MAP.items()}
+_WORKERS = 8
 
 
 def main():
@@ -56,18 +56,7 @@ def _load_gameweek(
     with get_connection() as conn:
         FootballDataLoader(conn).load_raw("matches_by_gameweek", f"{season}_{matchweek}", raw)
 
-    for match in raw.get("data", []):
-        with get_connection() as conn:
-            loader = FootballDataLoader(conn)
-            loader.load_competition({"id": match["competitionId"], "name": match["competition"]})
-            loader.load_season({"id": match["season"], "label": match["season"]})
-
-            for side in ("homeTeam", "awayTeam"):
-                team = match[side]
-                loader.load_club({"id": team["id"], "name": team["name"], "shortName": team.get("shortName")})
-
-            loader.load_match(_build_match_record(match))
-            _load_match(fetcher, transformer, loader, int(match["matchId"]))
+    _process_matches(fetcher, transformer, raw.get("data", []))
 
 
 def _load_season(
@@ -82,19 +71,44 @@ def _load_season(
     with get_connection() as conn:
         FootballDataLoader(conn).load_raw("matches_by_season", str(season), matches)
 
-    for match in matches:
-        with get_connection() as conn:
-            loader = FootballDataLoader(conn)
-            loader.load_competition({"id": match["competitionId"], "name": match["competition"]})
-            season_id = match["season"]
-            loader.load_season({"id": season_id, "label": _SEASON_LABEL.get(season_id, season_id)})
+    _process_matches(fetcher, transformer, matches)
 
-            for side in ("homeTeam", "awayTeam"):
-                team = match[side]
-                loader.load_club({"id": team["id"], "name": team["name"], "shortName": team.get("shortName")})
 
-            loader.load_match(_build_match_record(match))
-            _load_match(fetcher, transformer, loader, int(match["matchId"]))
+def _process_matches(
+    fetcher: FootballDataExtractor,
+    transformer: FootballDataTransformer,
+    matches: list[dict],
+) -> None:
+    with ThreadPoolExecutor(max_workers=_WORKERS) as executor:
+        futures = {
+            executor.submit(_process_match, fetcher, transformer, match): match
+            for match in matches
+        }
+        for future in as_completed(futures):
+            match = futures[future]
+            try:
+                future.result()
+            except Exception as e:
+                logger.error(f"Failed to process match {match.get('matchId')}: {e}")
+
+
+def _process_match(
+    fetcher: FootballDataExtractor,
+    transformer: FootballDataTransformer,
+    match: dict,
+) -> None:
+    with get_connection() as conn:
+        loader = FootballDataLoader(conn)
+        loader.load_competition({"id": match["competitionId"], "name": match["competition"]})
+        season_id = match["season"]
+        loader.load_season({"id": season_id, "label": _SEASON_LABEL.get(season_id, season_id)})
+
+        for side in ("homeTeam", "awayTeam"):
+            team = match[side]
+            loader.load_club({"id": team["id"], "name": team["name"], "shortName": team.get("shortName")})
+
+        loader.load_match(_build_match_record(match))
+        _load_match(fetcher, transformer, loader, int(match["matchId"]))
 
 
 def _build_match_record(match: dict) -> dict:
@@ -141,18 +155,36 @@ def _enrich_players(
         known_seasons = loader.get_season_ids()
         player_ids = loader.get_unenriched_player_ids()
 
-    for player_id in player_ids:
-        raw = fetcher.fetch_player_data(player_id)
-        if not raw:
-            continue
-        with get_connection() as conn:
-            loader = FootballDataLoader(conn)
-            loader.load_raw("player", player_id, raw)
-            player, player_seasons = transformer.transform_player(raw)
-            loader.load_player(player)
-            for ps in player_seasons:
-                if int(ps["season_id"]) in known_seasons:
-                    loader.load_player_season(ps)
+    with ThreadPoolExecutor(max_workers=_WORKERS) as executor:
+        futures = {
+            executor.submit(_enrich_player, fetcher, transformer, player_id, known_seasons): player_id
+            for player_id in player_ids
+        }
+        for future in as_completed(futures):
+            player_id = futures[future]
+            try:
+                future.result()
+            except Exception as e:
+                logger.error(f"Failed to enrich player {player_id}: {e}")
+
+
+def _enrich_player(
+    fetcher: FootballDataExtractor,
+    transformer: FootballDataTransformer,
+    player_id: int,
+    known_seasons: set[int],
+) -> None:
+    raw = fetcher.fetch_player_data(player_id)
+    if not raw:
+        return
+    with get_connection() as conn:
+        loader = FootballDataLoader(conn)
+        loader.load_raw("player", player_id, raw)
+        player, player_seasons = transformer.transform_player(raw)
+        loader.load_player(player)
+        for ps in player_seasons:
+            if int(ps["season_id"]) in known_seasons:
+                loader.load_player_season(ps)
 
 
 def _seed_players_from_lineup(loader: FootballDataLoader, raw_lineups: dict) -> None:

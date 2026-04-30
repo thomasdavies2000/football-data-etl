@@ -1,0 +1,11 @@
+TRUNCATE
+    fact.match_event,
+    fact.match_lineup,
+    fact.player_season,
+    dim.match,
+    dim.player,
+    dim.club,
+    dim.season,
+    dim.competition,
+    raw.api_response
+CASCADE;

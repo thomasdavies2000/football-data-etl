@@ -1,9 +1,5 @@
 from unittest.mock import patch, Mock
 import json
-import sys
-import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from extract.fetch_data import FootballDataExtractor
 
