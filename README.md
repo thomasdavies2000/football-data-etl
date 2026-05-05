@@ -23,8 +23,8 @@ flowchart TD
 
     subgraph pg ["PostgreSQL"]
         RAW["raw.api_response"]
-        DIM["dim.*\ncompetition · season · club · player"]
-        FACT["fact.*\nmatch_lineup · match_event · player_season"]
+        DIM["dim.*\ncompetition · season · club · player · manager"]
+        FACT["fact.*\nmatch_lineup · match_event · match_manager · player_season"]
     end
 
     API --> L1 & L2 & L3 & E1
@@ -69,6 +69,18 @@ docker compose down -v
 docker compose up
 ```
 
+## Running migrations against a remote database
+
+```bash
+docker run --rm \
+    -v $(pwd)/sql/migrations:/flyway/sql \
+    flyway/flyway:10 migrate \
+    -url="jdbc:postgresql://switchback.proxy.rlwy.net:53293/railway" \
+    -user=postgres \
+    -password=<DB_PASSWORD> \
+    -connectRetries=5
+```
+
 ## Design decisions
 
 ### Database: PostgreSQL
@@ -99,9 +111,12 @@ erDiagram
     club ||--o{ match : "away"
     match ||--o{ match_event : ""
     match ||--o{ match_lineup : ""
+    match ||--o{ match_manager : ""
     player ||--o{ match_event : ""
     player ||--o{ match_lineup : ""
     player ||--o{ player_season : ""
+    manager ||--o{ match_manager : ""
+    club ||--o{ match_manager : ""
     club ||--o{ player_season : ""
     season ||--o{ player_season : ""
     competition ||--o{ player_season : ""
@@ -130,9 +145,11 @@ FK constraints mean dimensions must be populated before facts. Within that, the 
 2. `dim.season` — seed with known season IDs
 3. `dim.club` — fetch club metadata by ID
 4. `dim.player` — discovered via club squad endpoints; insert player identity records
-5. `fact.player_season` — loaded alongside player data; requires player, season, competition, and club to exist
-6. `fact.match_event` — fetched per match ID; requires club and player records to exist
-7. `fact.match_lineup` — fetched per match ID; requires club and player records to exist
+5. `dim.manager` — seeded from lineup responses; insert manager identity records
+6. `fact.player_season` — loaded alongside player data; requires player, season, competition, and club to exist
+7. `fact.match_event` — fetched per match ID; requires club and player records to exist
+8. `fact.match_lineup` — fetched per match ID; requires club and player records to exist
+9. `fact.match_manager` — fetched per match ID (from lineup response); requires club and manager records to exist
 
 `raw.api_response` can be written at any point — it has no FK dependencies and should be written before transformation so the raw payload is always persisted regardless of whether the transform/load succeeds.
 
@@ -213,3 +230,30 @@ Dimensions — check what's been seeded:
   FROM raw.api_response
   WHERE endpoint = 'matches_by_season'
   ORDER BY season;
+
+  Managers — who managed each team per match:
+  SELECT
+      m.id AS match_id,
+      m.kickoff,
+      c.name AS team,
+      mg.display_name AS manager
+  FROM fact.match_manager mm
+  JOIN dim.match m ON m.id = mm.match_id
+  JOIN dim.club c ON c.id = mm.team_id
+  JOIN dim.manager mg ON mg.id = mm.manager_id
+  ORDER BY m.kickoff, c.name;
+
+  Match details — ground and attendance:
+  SELECT
+      m.id,
+      m.kickoff,
+      ht.name AS home_team,
+      at.name AS away_team,
+      m.home_score,
+      m.away_score,
+      m.ground,
+      m.attendance
+  FROM dim.match m
+  JOIN dim.club ht ON ht.id = m.home_team_id
+  JOIN dim.club at ON at.id = m.away_team_id
+  ORDER BY m.kickoff;
