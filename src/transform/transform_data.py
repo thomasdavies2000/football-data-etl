@@ -130,3 +130,20 @@ class FootballDataTransformer:
                 })
 
         return rows
+
+    def transform_match_managers(self, match_id: int, raw_data: dict) -> list[dict]:
+        rows = []
+
+        for side in ("home_team", "away_team"):
+            team = raw_data.get(side, {})
+            team_id = int(team["teamId"])
+
+            for manager in team.get("managers", []):
+                if manager.get("type") == "Manager":
+                    rows.append({
+                        "match_id": match_id,
+                        "team_id": team_id,
+                        "manager_id": int(manager["id"]),
+                    })
+
+        return rows

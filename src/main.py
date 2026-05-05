@@ -27,17 +27,14 @@ def main():
     args = parser.parse_args()
     load_env(args.env)
 
-    if args.season not in SEASON_ID_MAP and args.matchweek is None:
-        parser.error("--matchweek is required for seasons not in SEASON_ID_MAP")
-
     fetcher = FootballDataExtractor()
     transformer = FootballDataTransformer()
 
     if args.only != "enrich":
-        if args.season in SEASON_ID_MAP:
-            _load_season(fetcher, transformer, args.season)
-        else:
+        if args.matchweek is not None:
             _load_gameweek(fetcher, transformer, args.season, args.matchweek)
+        else:
+            _load_season(fetcher, transformer, args.season)
 
     if args.only != "load":
         _enrich_players(fetcher, transformer)
@@ -122,6 +119,11 @@ def _build_match_record(match: dict) -> dict:
         "matchweek": int(match["phase"]) if match.get("phase") else None,
         "home_score": match["homeTeam"].get("score"),
         "away_score": match["awayTeam"].get("score"),
+        "ground": match.get("ground"),
+        "attendance": match.get("attendance"),
+        "period": match.get("period"),
+        "home_half_time_score": match["homeTeam"].get("halfTimeScore"),
+        "away_half_time_score": match["awayTeam"].get("halfTimeScore"),
     }
 
 
@@ -136,8 +138,11 @@ def _load_match(
     if raw_lineups:
         loader.load_raw("match_lineups", match_id, raw_lineups)
         _seed_players_from_lineup(loader, raw_lineups)
+        _seed_managers_from_lineup(loader, raw_lineups)
         lineup_rows = transformer.transform_match_lineup(match_id, raw_lineups)
         loader.load_match_lineup(lineup_rows)
+        manager_rows = transformer.transform_match_managers(match_id, raw_lineups)
+        loader.load_match_manager(manager_rows)
 
     raw_events = fetcher.fetch_match_events_data(match_id)
     if raw_events:
@@ -201,6 +206,20 @@ def _seed_players_from_lineup(loader: FootballDataLoader, raw_lineups: dict) -> 
                 "country": None,
                 "country_iso": None,
             })
+
+
+def _seed_managers_from_lineup(loader: FootballDataLoader, raw_lineups: dict) -> None:
+    for side in ("home_team", "away_team"):
+        for manager in raw_lineups.get(side, {}).get("managers", []):
+            if manager.get("type") == "Manager":
+                first = manager.get("firstName", "")
+                last = manager.get("lastName", "")
+                loader.load_manager({
+                    "id": int(manager["id"]),
+                    "first_name": first,
+                    "last_name": last,
+                    "display_name": f"{first} {last}".strip(),
+                })
 
 
 if __name__ == "__main__":

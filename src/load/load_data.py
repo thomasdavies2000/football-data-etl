@@ -39,11 +39,24 @@ class FootballDataLoader:
         with self.conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO dim.match (id, season_id, competition_id, home_team_id, away_team_id, kickoff, matchweek, home_score, away_score)
-                VALUES (%(id)s, %(season_id)s, %(competition_id)s, %(home_team_id)s, %(away_team_id)s, %(kickoff)s, %(matchweek)s, %(home_score)s, %(away_score)s)
+                INSERT INTO dim.match (
+                    id, season_id, competition_id, home_team_id, away_team_id,
+                    kickoff, matchweek, home_score, away_score,
+                    ground, attendance, period, home_half_time_score, away_half_time_score
+                )
+                VALUES (
+                    %(id)s, %(season_id)s, %(competition_id)s, %(home_team_id)s, %(away_team_id)s,
+                    %(kickoff)s, %(matchweek)s, %(home_score)s, %(away_score)s,
+                    %(ground)s, %(attendance)s, %(period)s, %(home_half_time_score)s, %(away_half_time_score)s
+                )
                 ON CONFLICT (id) DO UPDATE SET
-                    home_score = EXCLUDED.home_score,
-                    away_score = EXCLUDED.away_score
+                    home_score              = EXCLUDED.home_score,
+                    away_score              = EXCLUDED.away_score,
+                    ground                  = EXCLUDED.ground,
+                    attendance              = EXCLUDED.attendance,
+                    period                  = EXCLUDED.period,
+                    home_half_time_score    = EXCLUDED.home_half_time_score,
+                    away_half_time_score    = EXCLUDED.away_half_time_score
                 """,
                 match,
             )
@@ -179,6 +192,36 @@ class FootballDataLoader:
                 ],
             )
         logger.info(f"Loaded {len(events)} events for match {match_id}")
+
+    def load_manager(self, manager: dict) -> None:
+        with self.conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO dim.manager (id, first_name, last_name, display_name)
+                VALUES (%(id)s, %(first_name)s, %(last_name)s, %(display_name)s)
+                ON CONFLICT (id) DO UPDATE SET
+                    first_name   = EXCLUDED.first_name,
+                    last_name    = EXCLUDED.last_name,
+                    display_name = EXCLUDED.display_name
+                """,
+                manager,
+            )
+        logger.info(f"Upserted manager {manager['id']}")
+
+    def load_match_manager(self, rows: list[dict]) -> None:
+        if not rows:
+            return
+        with self.conn.cursor() as cur:
+            execute_values(
+                cur,
+                """
+                INSERT INTO fact.match_manager (match_id, team_id, manager_id)
+                VALUES %s
+                ON CONFLICT (match_id, team_id, manager_id) DO NOTHING
+                """,
+                [(r["match_id"], r["team_id"], r["manager_id"]) for r in rows],
+            )
+        logger.info(f"Upserted {len(rows)} manager rows for match {rows[0]['match_id']}")
 
     def load_match_lineup(self, lineup_rows: list[dict]) -> None:
         if not lineup_rows:
