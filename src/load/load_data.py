@@ -166,6 +166,16 @@ class FootballDataLoader:
             cur.execute("SELECT COUNT(*) FROM dim.match WHERE season_id = %s", (season_id,))
             return cur.fetchone()[0]
 
+    def get_competition_ids(self) -> set[int]:
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT id FROM dim.competition")
+            return {row[0] for row in cur.fetchall()}
+
+    def get_club_ids(self) -> set[int]:
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT id FROM dim.club")
+            return {row[0] for row in cur.fetchall()}
+
     def get_season_ids(self) -> set[int]:
         with self.conn.cursor() as cur:
             cur.execute("SELECT id FROM dim.season")

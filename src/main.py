@@ -16,7 +16,7 @@ _WORKERS = 4
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--season", type=int, required=True)
+    parser.add_argument("--season", type=int)
     parser.add_argument("--matchweek", type=int)
     parser.add_argument("--env", help="Environment to load (e.g. 'dev' loads .env.dev; omit for .env)")
     parser.add_argument(
@@ -25,6 +25,8 @@ def main():
         help="Run only the load or enrich phase (default: both)",
     )
     args = parser.parse_args()
+    if args.only != "enrich" and args.season is None:
+        parser.error("--season is required unless --only enrich")
     load_env(args.env)
 
     fetcher = FootballDataExtractor()
@@ -78,11 +80,32 @@ def _load_season(
     logger.info(f"Season {season}: {count} matches now in DB")
 
 
+def _preload_shared_dims(matches: list[dict]) -> None:
+    competitions: dict = {}
+    seasons: dict = {}
+    for m in matches:
+        cid = m["competitionId"]
+        if cid not in competitions:
+            competitions[cid] = {"id": cid, "name": m["competition"]}
+        sid = m["season"]
+        if sid not in seasons:
+            seasons[sid] = {"id": sid, "label": _SEASON_LABEL.get(str(sid), str(sid))}
+    with get_connection() as conn:
+        loader = FootballDataLoader(conn)
+        for comp in competitions.values():
+            loader.load_competition(comp)
+        for season in seasons.values():
+            loader.load_season(season)
+
+
 def _process_matches(
     fetcher: FootballDataExtractor,
     transformer: FootballDataTransformer,
     matches: list[dict],
 ) -> None:
+    if not matches:
+        return
+    _preload_shared_dims(matches)
     with ThreadPoolExecutor(max_workers=_WORKERS) as executor:
         futures = {
             executor.submit(_process_match, fetcher, transformer, match): match
@@ -103,10 +126,6 @@ def _process_match(
 ) -> None:
     with get_connection() as conn:
         loader = FootballDataLoader(conn)
-        loader.load_competition({"id": match["competitionId"], "name": match["competition"]})
-        season_id = match["season"]
-        loader.load_season({"id": season_id, "label": _SEASON_LABEL.get(season_id, season_id)})
-
         for side in ("homeTeam", "awayTeam"):
             team = match[side]
             loader.load_club({"id": team["id"], "name": team["name"], "shortName": team.get("shortName")})
@@ -165,11 +184,16 @@ def _enrich_players(
     with get_connection() as conn:
         loader = FootballDataLoader(conn)
         known_seasons = loader.get_season_ids()
+        known_competitions = loader.get_competition_ids()
+        known_clubs = loader.get_club_ids()
         player_ids = loader.get_unenriched_player_ids()
 
     with ThreadPoolExecutor(max_workers=_WORKERS) as executor:
         futures = {
-            executor.submit(_enrich_player, fetcher, transformer, player_id, known_seasons): player_id
+            executor.submit(
+                _enrich_player, fetcher, transformer,
+                player_id, known_seasons, known_competitions, known_clubs,
+            ): player_id
             for player_id in player_ids
         }
         for future in as_completed(futures):
@@ -185,6 +209,8 @@ def _enrich_player(
     transformer: FootballDataTransformer,
     player_id: int,
     known_seasons: set[int],
+    known_competitions: set[int],
+    known_clubs: set[int],
 ) -> None:
     raw = fetcher.fetch_player_data(player_id)
     if not raw:
@@ -195,7 +221,11 @@ def _enrich_player(
         player, player_seasons = transformer.transform_player(raw)
         loader.load_player(player)
         for ps in player_seasons:
-            if int(ps["season_id"]) in known_seasons:
+            if (
+                int(ps["season_id"]) in known_seasons
+                and int(ps["competition_id"]) in known_competitions
+                and int(ps["team_id"]) in known_clubs
+            ):
                 loader.load_player_season(ps)
 
 
