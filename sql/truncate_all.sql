@@ -1,9 +1,11 @@
 TRUNCATE
     fact.match_event,
     fact.match_lineup,
+    fact.match_manager,
     fact.player_season,
     dim.match,
     dim.player,
+    dim.manager,
     dim.club,
     dim.season,
     dim.competition,
