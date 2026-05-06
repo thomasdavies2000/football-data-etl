@@ -11,7 +11,7 @@ from logs.logger import get_logger
 logger = get_logger(__name__)
 
 _SEASON_LABEL = {str(v): str(k) for k, v in SEASON_ID_MAP.items()}
-_WORKERS = 8
+_WORKERS = 4
 
 
 def main():
@@ -65,10 +65,17 @@ def _load_season(
     if not matches:
         return
 
+    logger.info(f"Season {season}: fetched {len(matches)} matches from API")
+
     with get_connection() as conn:
         FootballDataLoader(conn).load_raw("matches_by_season", str(season), matches)
 
     _process_matches(fetcher, transformer, matches)
+
+    season_id_in_db = int(matches[0]["season"])
+    with get_connection() as conn:
+        count = FootballDataLoader(conn).get_match_count_by_season(season_id_in_db)
+    logger.info(f"Season {season}: {count} matches now in DB")
 
 
 def _process_matches(

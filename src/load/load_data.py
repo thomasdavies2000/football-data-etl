@@ -161,6 +161,11 @@ class FootballDataLoader:
             )
         logger.info(f"Upserted player season {player_season['player_id']}/{player_season['season_id']}")
 
+    def get_match_count_by_season(self, season_id: int) -> int:
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM dim.match WHERE season_id = %s", (season_id,))
+            return cur.fetchone()[0]
+
     def get_season_ids(self) -> set[int]:
         with self.conn.cursor() as cur:
             cur.execute("SELECT id FROM dim.season")

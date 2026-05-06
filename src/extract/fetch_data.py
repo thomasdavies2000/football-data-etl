@@ -1,7 +1,12 @@
+import time
+
 import requests
 from logs.logger import get_logger
 
 _TIMEOUT = 30
+_REQUEST_DELAY = 0.2   # seconds between every request
+_RETRY_AFTER = 10      # base seconds to wait after a 429
+_MAX_RETRIES = 3
 
 logger = get_logger(__name__)
 
@@ -23,66 +28,11 @@ class FootballDataExtractor:
     def __init__(self):
         pass
 
-    def fetch_player_data(self, id) -> list | None:
-        players_url = f"{self.base_url}/api/v2/players/{id}"
-        logger.info(f"Fetching football data from {players_url}...")
-        try:
-            response = requests.get(players_url, timeout=_TIMEOUT)
-            if response.status_code == 200:
-                return response.json()
-            else:
-                logger.error(f"Failed to fetch data: {response.status_code}")
-                return None
-        except requests.exceptions.Timeout:
-            logger.error("Request timed out")
-            return None
-        except requests.exceptions.ConnectionError:
-            logger.error("Failed to connect to the server")
-            return None
-        except requests.exceptions.RequestException as e:
-            logger.error(f"An unexpected error occurred: {e}")
-            return None
-
-    def fetch_matches_by_gameweek_data(self, season, matchweek, competition=8) -> list | None:
-        # example url: https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v2/matches?competition=8&season=2025&matchweek=34&_limit=20
-        # another example, for some reason this is 1992/1993: https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v2/matches?competition=8&season=11
-        # https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v2/matches?competition=8&season=11&kickoff%3E1992-08-01&kickoff%3C1992-09-01&_limit=20&_next=MTY3ODA
-        season = SEASON_ID_MAP.get(season, season)
-        matches_by_gameweek_url = f"{self.base_url}/api/v2/matches?competition={competition}&season={season}&matchweek={matchweek}&_limit=20"
-        logger.info(f"Fetching football data from {matches_by_gameweek_url}...")
-        try:
-            response = requests.get(matches_by_gameweek_url, timeout=_TIMEOUT)
-            if response.status_code == 200:
-                return response.json()
-            else:
-                logger.error(f"Failed to fetch data: {response.status_code}")
-                return None
-        except requests.exceptions.Timeout:
-            logger.error("Request timed out")
-            return None
-        except requests.exceptions.ConnectionError:
-            logger.error("Failed to connect to the server")
-            return None
-        except requests.exceptions.RequestException as e:
-            logger.error(f"An unexpected error occurred: {e}")
-            return None
-
-    def fetch_matches_by_season_data(self, season, competition=8) -> list | None:
-        season_id = SEASON_ID_MAP.get(season, season)
-        base = f"{self.base_url}/api/v2/matches?competition={competition}&season={season_id}&_limit=20"
-
-        all_matches = []
-        next_cursor = None
-
-        while True:
-            url = f"{base}&_next={next_cursor}" if next_cursor else base
-            logger.info(f"Fetching football data from {url}...")
+    def _get(self, url: str) -> requests.Response | None:
+        for attempt in range(_MAX_RETRIES):
+            time.sleep(_REQUEST_DELAY)
             try:
                 response = requests.get(url, timeout=_TIMEOUT)
-                if response.status_code != 200:
-                    logger.error(f"Failed to fetch data: {response.status_code}")
-                    return None
-                page = response.json()
             except requests.exceptions.Timeout:
                 logger.error("Request timed out")
                 return None
@@ -93,6 +43,49 @@ class FootballDataExtractor:
                 logger.error(f"An unexpected error occurred: {e}")
                 return None
 
+            if response.status_code == 200:
+                return response
+            if response.status_code == 429:
+                wait = _RETRY_AFTER * (attempt + 1)
+                logger.warning(f"Rate limited (429) for {url}, waiting {wait}s (attempt {attempt + 1}/{_MAX_RETRIES})...")
+                time.sleep(wait)
+                continue
+            logger.error(f"Failed to fetch data: {response.status_code} for {url}")
+            return None
+
+        logger.error(f"Max retries exceeded for {url}")
+        return None
+
+    def fetch_player_data(self, id) -> list | None:
+        url = f"{self.base_url}/api/v2/players/{id}"
+        logger.info(f"Fetching {url}")
+        response = self._get(url)
+        return response.json() if response else None
+
+    def fetch_matches_by_gameweek_data(self, season, matchweek, competition=8) -> list | None:
+        # example url: https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v2/matches?competition=8&season=2025&matchweek=34&_limit=20
+        # another example, for some reason this is 1992/1993: https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v2/matches?competition=8&season=11
+        # https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v2/matches?competition=8&season=11&kickoff%3E1992-08-01&kickoff%3C1992-09-01&_limit=20&_next=MTY3ODA
+        season = SEASON_ID_MAP.get(season, season)
+        url = f"{self.base_url}/api/v2/matches?competition={competition}&season={season}&matchweek={matchweek}&_limit=20"
+        logger.info(f"Fetching {url}")
+        response = self._get(url)
+        return response.json() if response else None
+
+    def fetch_matches_by_season_data(self, season, competition=8) -> list | None:
+        season_id = SEASON_ID_MAP.get(season, season)
+        base = f"{self.base_url}/api/v2/matches?competition={competition}&season={season_id}&_limit=20"
+
+        all_matches = []
+        next_cursor = None
+
+        while True:
+            url = f"{base}&_next={next_cursor}" if next_cursor else base
+            logger.info(f"Fetching {url}")
+            response = self._get(url)
+            if not response:
+                return None
+            page = response.json()
             all_matches.extend(page.get("data", []))
             next_cursor = page.get("pagination", {}).get("_next")
             if not next_cursor:
@@ -101,83 +94,27 @@ class FootballDataExtractor:
         return all_matches
 
     def fetch_match_events_data(self, id) -> dict | None:
-        match_events_url = f"{self.base_url}/api/v1/matches/{id}/events"
-        logger.info(f"Fetching football data from {match_events_url}...")
-        try:
-            response = requests.get(match_events_url, timeout=_TIMEOUT)
-            if response.status_code == 200:
-                return response.json()
-            else:
-                logger.error(f"Failed to fetch data: {response.status_code}")
-                return None
-        except requests.exceptions.Timeout:
-            logger.error("Request timed out")
-            return None
-        except requests.exceptions.ConnectionError:
-            logger.error("Failed to connect to the server")
-            return None
-        except requests.exceptions.RequestException as e:
-            logger.error(f"An unexpected error occurred: {e}")
-            return None
+        url = f"{self.base_url}/api/v1/matches/{id}/events"
+        logger.info(f"Fetching {url}")
+        response = self._get(url)
+        return response.json() if response else None
 
     def fetch_match_lineups_data(self, id) -> dict | None:
-        match_lineups_url = f"{self.base_url}/api/v3/matches/{id}/lineups"
-        logger.info(f"Fetching football data from {match_lineups_url}...")
-        try:
-            response = requests.get(match_lineups_url, timeout=_TIMEOUT)
-            if response.status_code == 200:
-                return response.json()
-            else:
-                logger.error(f"Failed to fetch data: {response.status_code}")
-                return None
-        except requests.exceptions.Timeout:
-            logger.error("Request timed out")
-            return None
-        except requests.exceptions.ConnectionError:
-            logger.error("Failed to connect to the server")
-            return None
-        except requests.exceptions.RequestException as e:
-            logger.error(f"An unexpected error occurred: {e}")
-            return None
+        url = f"{self.base_url}/api/v3/matches/{id}/lineups"
+        logger.info(f"Fetching {url}")
+        response = self._get(url)
+        return response.json() if response else None
 
     def fetch_club_data(self, id) -> dict | None:
-        clubs_url = f"{self.base_url}/api/v1/metadata/SDP_FOOTBALL_TEAM/{id}"
-        logger.info(f"Fetching football data from {clubs_url}...")
-        try:
-            response = requests.get(clubs_url, timeout=_TIMEOUT)
-            if response.status_code == 200:
-                return response.json()
-            else:
-                logger.error(f"Failed to fetch data: {response.status_code}")
-                return None
-        except requests.exceptions.Timeout:
-            logger.error("Request timed out")
-            return None
-        except requests.exceptions.ConnectionError:
-            logger.error("Failed to connect to the server")
-            return None
-        except requests.exceptions.RequestException as e:
-            logger.error(f"An unexpected error occurred: {e}")
-            return None
+        url = f"{self.base_url}/api/v1/metadata/SDP_FOOTBALL_TEAM/{id}"
+        logger.info(f"Fetching {url}")
+        response = self._get(url)
+        return response.json() if response else None
 
     def fetch_club_squad_data(self, id, season, competition=8) -> dict | None:
         # example url https://sdp-prem-prod.premier-league-prod.pulselive.com/api/v2/competitions/8/seasons/2010/teams/43/squad
         season = SEASON_ID_MAP.get(season, season)
-        club_squad_url = f"{self.base_url}/api/v2/competitions/{competition}/seasons/{season}/teams/{id}/squad"
-        logger.info(f"Fetching football data from {club_squad_url}...")
-        try:
-            response = requests.get(club_squad_url, timeout=_TIMEOUT)
-            if response.status_code == 200:
-                return response.json()
-            else:
-                logger.error(f"Failed to fetch data: {response.status_code}")
-                return None
-        except requests.exceptions.Timeout:
-            logger.error("Request timed out")
-            return None
-        except requests.exceptions.ConnectionError:
-            logger.error("Failed to connect to the server")
-            return None
-        except requests.exceptions.RequestException as e:
-            logger.error(f"An unexpected error occurred: {e}")
-            return None
+        url = f"{self.base_url}/api/v2/competitions/{competition}/seasons/{season}/teams/{id}/squad"
+        logger.info(f"Fetching {url}")
+        response = self._get(url)
+        return response.json() if response else None
