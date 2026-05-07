@@ -12,6 +12,7 @@ logger = get_logger(__name__)
 
 _SEASON_LABEL = {str(v): str(k) for k, v in SEASON_ID_MAP.items()}
 _WORKERS = 4
+_BATCH_SIZE = 10
 
 
 def main():
@@ -114,17 +115,20 @@ def _process_matches(
     if not matches:
         return
     _preload_shared_dims(matches)
-    with ThreadPoolExecutor(max_workers=_WORKERS) as executor:
-        futures = {
-            executor.submit(_process_match, fetcher, transformer, match): match
-            for match in matches
-        }
-        for future in as_completed(futures):
-            match = futures[future]
-            try:
-                future.result()
-            except Exception as e:
-                logger.error(f"Failed to process match {match.get('matchId')}: {e}")
+    for i in range(0, len(matches), _BATCH_SIZE):
+        batch = matches[i:i + _BATCH_SIZE]
+        logger.info(f"Processing matches {i + 1}–{i + len(batch)} of {len(matches)}")
+        with ThreadPoolExecutor(max_workers=_WORKERS) as executor:
+            futures = {
+                executor.submit(_process_match, fetcher, transformer, match): match
+                for match in batch
+            }
+            for future in as_completed(futures):
+                match = futures[future]
+                try:
+                    future.result()
+                except Exception as e:
+                    logger.error(f"Failed to process match {match.get('matchId')}: {e}")
 
 
 def _process_match(
@@ -132,10 +136,27 @@ def _process_match(
     transformer: FootballDataTransformer,
     match: dict,
 ) -> None:
+    match_id = int(match["matchId"])
+
+    with get_connection() as conn:
+        FootballDataLoader(conn).load_match(_build_match_record(match))
+
+    # Fetch from API with no DB connection held
+    raw_lineups = fetcher.fetch_match_lineups_data(match_id)
+    raw_events = fetcher.fetch_match_events_data(match_id)
+
     with get_connection() as conn:
         loader = FootballDataLoader(conn)
-        loader.load_match(_build_match_record(match))
-        _load_match(fetcher, transformer, loader, int(match["matchId"]))
+        if raw_lineups:
+            loader.load_raw("match_lineups", match_id, raw_lineups)
+            _seed_players_from_lineup(loader, raw_lineups)
+            _seed_managers_from_lineup(loader, raw_lineups)
+            # Lineups first — seeds dim.player rows needed for FK constraints on events
+            loader.load_match_lineup(transformer.transform_match_lineup(match_id, raw_lineups))
+            loader.load_match_manager(transformer.transform_match_managers(match_id, raw_lineups))
+        if raw_events:
+            loader.load_raw("match_events", match_id, raw_events)
+            loader.load_match_events(match_id, transformer.transform_match_events(match_id, raw_events))
 
 
 def _build_match_record(match: dict) -> dict:
@@ -156,29 +177,6 @@ def _build_match_record(match: dict) -> dict:
         "away_half_time_score": match["awayTeam"].get("halfTimeScore"),
     }
 
-
-def _load_match(
-    fetcher: FootballDataExtractor,
-    transformer: FootballDataTransformer,
-    loader: FootballDataLoader,
-    match_id: int,
-) -> None:
-    # Lineups first — seeds dim.player rows needed for FK constraints on events
-    raw_lineups = fetcher.fetch_match_lineups_data(match_id)
-    if raw_lineups:
-        loader.load_raw("match_lineups", match_id, raw_lineups)
-        _seed_players_from_lineup(loader, raw_lineups)
-        _seed_managers_from_lineup(loader, raw_lineups)
-        lineup_rows = transformer.transform_match_lineup(match_id, raw_lineups)
-        loader.load_match_lineup(lineup_rows)
-        manager_rows = transformer.transform_match_managers(match_id, raw_lineups)
-        loader.load_match_manager(manager_rows)
-
-    raw_events = fetcher.fetch_match_events_data(match_id)
-    if raw_events:
-        loader.load_raw("match_events", match_id, raw_events)
-        events = transformer.transform_match_events(match_id, raw_events)
-        loader.load_match_events(match_id, events)
 
 
 def _enrich_players(
