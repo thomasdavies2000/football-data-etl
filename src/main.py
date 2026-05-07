@@ -141,14 +141,46 @@ def _process_batch(
             except Exception as e:
                 logger.error(f"Failed to fetch match {match_id}: {e}")
 
-    # Phase 2: seed players and managers serially — eliminates cross-worker deadlocks
-    # on dim.player/dim.manager since the same player can appear in many lineups
+    # Phase 2: collect all players/managers from the batch, deduplicate, sort by ID,
+    # then insert in one serial transaction. Sorting by ID ensures any two concurrent
+    # processes (e.g. parallel GH Actions jobs) always acquire row locks in the same
+    # order, making a circular wait impossible.
+    players: dict[int, dict] = {}
+    managers: dict[int, dict] = {}
+    for raw_lineups, _ in fetched.values():
+        if not raw_lineups:
+            continue
+        for side in ("home_team", "away_team"):
+            for p in raw_lineups.get(side, {}).get("players", []):
+                pid = int(p["id"])
+                if pid not in players:
+                    first, last = p.get("firstName", ""), p.get("lastName", "")
+                    players[pid] = {
+                        "player_id": pid,
+                        "first_name": first,
+                        "last_name": last,
+                        "display_name": f"{first} {last}".strip(),
+                        "date_of_birth": None,
+                        "country": None,
+                        "country_iso": None,
+                    }
+            for m in raw_lineups.get(side, {}).get("managers", []):
+                if m.get("type") == "Manager":
+                    mid = int(m["id"])
+                    if mid not in managers:
+                        first, last = m.get("firstName", ""), m.get("lastName", "")
+                        managers[mid] = {
+                            "id": mid,
+                            "first_name": first,
+                            "last_name": last,
+                            "display_name": f"{first} {last}".strip(),
+                        }
     with get_connection() as conn:
         loader = FootballDataLoader(conn)
-        for raw_lineups, _ in fetched.values():
-            if raw_lineups:
-                _seed_players_from_lineup(loader, raw_lineups)
-                _seed_managers_from_lineup(loader, raw_lineups)
+        for player in sorted(players.values(), key=lambda p: p["player_id"]):
+            loader.load_player(player)
+        for manager in sorted(managers.values(), key=lambda m: m["id"]):
+            loader.load_manager(manager)
 
     # Phase 3: write match rows and per-match detail data in parallel
     with ThreadPoolExecutor(max_workers=_WORKERS) as executor:
@@ -263,35 +295,6 @@ def _enrich_player(
             ):
                 loader.load_player_season(ps)
 
-
-def _seed_players_from_lineup(loader: FootballDataLoader, raw_lineups: dict) -> None:
-    for side in ("home_team", "away_team"):
-        for player in raw_lineups.get(side, {}).get("players", []):
-            first = player.get("firstName", "")
-            last = player.get("lastName", "")
-            loader.load_player({
-                "player_id": player["id"],
-                "first_name": first,
-                "last_name": last,
-                "display_name": f"{first} {last}".strip(),
-                "date_of_birth": None,
-                "country": None,
-                "country_iso": None,
-            })
-
-
-def _seed_managers_from_lineup(loader: FootballDataLoader, raw_lineups: dict) -> None:
-    for side in ("home_team", "away_team"):
-        for manager in raw_lineups.get(side, {}).get("managers", []):
-            if manager.get("type") == "Manager":
-                first = manager.get("firstName", "")
-                last = manager.get("lastName", "")
-                loader.load_manager({
-                    "id": int(manager["id"]),
-                    "first_name": first,
-                    "last_name": last,
-                    "display_name": f"{first} {last}".strip(),
-                })
 
 
 if __name__ == "__main__":
