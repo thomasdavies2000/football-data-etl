@@ -118,40 +118,73 @@ def _process_matches(
     for i in range(0, len(matches), _BATCH_SIZE):
         batch = matches[i:i + _BATCH_SIZE]
         logger.info(f"Processing matches {i + 1}–{i + len(batch)} of {len(matches)}")
-        with ThreadPoolExecutor(max_workers=_WORKERS) as executor:
-            futures = {
-                executor.submit(_process_match, fetcher, transformer, match): match
-                for match in batch
-            }
-            for future in as_completed(futures):
-                match = futures[future]
-                try:
-                    future.result()
-                except Exception as e:
-                    logger.error(f"Failed to process match {match.get('matchId')}: {e}")
+        _process_batch(fetcher, transformer, batch)
 
 
-def _process_match(
+def _process_batch(
     fetcher: FootballDataExtractor,
     transformer: FootballDataTransformer,
-    match: dict,
+    batch: list[dict],
 ) -> None:
-    match_id = int(match["matchId"])
+    # Phase 1: fetch lineup + event data for all matches in parallel (no DB connection held)
+    fetched: dict[int, tuple[dict | None, list | None]] = {}
+    with ThreadPoolExecutor(max_workers=_WORKERS) as executor:
+        futures = {
+            executor.submit(_fetch_match_detail, fetcher, int(m["matchId"])): m
+            for m in batch
+        }
+        for future in as_completed(futures):
+            match = futures[future]
+            match_id = int(match["matchId"])
+            try:
+                fetched[match_id] = future.result()
+            except Exception as e:
+                logger.error(f"Failed to fetch match {match_id}: {e}")
 
-    with get_connection() as conn:
-        FootballDataLoader(conn).load_match(_build_match_record(match))
-
-    # Fetch from API with no DB connection held
-    raw_lineups = fetcher.fetch_match_lineups_data(match_id)
-    raw_events = fetcher.fetch_match_events_data(match_id)
-
+    # Phase 2: seed players and managers serially — eliminates cross-worker deadlocks
+    # on dim.player/dim.manager since the same player can appear in many lineups
     with get_connection() as conn:
         loader = FootballDataLoader(conn)
+        for raw_lineups, _ in fetched.values():
+            if raw_lineups:
+                _seed_players_from_lineup(loader, raw_lineups)
+                _seed_managers_from_lineup(loader, raw_lineups)
+
+    # Phase 3: write match rows and per-match detail data in parallel
+    with ThreadPoolExecutor(max_workers=_WORKERS) as executor:
+        futures = {
+            executor.submit(_write_match, transformer, match, fetched.get(int(match["matchId"]))): match
+            for match in batch
+        }
+        for future in as_completed(futures):
+            match = futures[future]
+            try:
+                future.result()
+            except Exception as e:
+                logger.error(f"Failed to write match {match.get('matchId')}: {e}")
+
+
+def _fetch_match_detail(
+    fetcher: FootballDataExtractor,
+    match_id: int,
+) -> tuple[dict | None, list | None]:
+    raw_lineups = fetcher.fetch_match_lineups_data(match_id)
+    raw_events = fetcher.fetch_match_events_data(match_id)
+    return raw_lineups, raw_events
+
+
+def _write_match(
+    transformer: FootballDataTransformer,
+    match: dict,
+    detail: tuple[dict | None, list | None] | None,
+) -> None:
+    match_id = int(match["matchId"])
+    raw_lineups, raw_events = detail if detail else (None, None)
+    with get_connection() as conn:
+        loader = FootballDataLoader(conn)
+        loader.load_match(_build_match_record(match))
         if raw_lineups:
             loader.load_raw("match_lineups", match_id, raw_lineups)
-            _seed_players_from_lineup(loader, raw_lineups)
-            _seed_managers_from_lineup(loader, raw_lineups)
-            # Lineups first — seeds dim.player rows needed for FK constraints on events
             loader.load_match_lineup(transformer.transform_match_lineup(match_id, raw_lineups))
             loader.load_match_manager(transformer.transform_match_managers(match_id, raw_lineups))
         if raw_events:
