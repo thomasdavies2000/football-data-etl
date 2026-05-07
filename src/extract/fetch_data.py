@@ -23,7 +23,7 @@ SEASON_ID_MAP = {
 
 class FootballDataExtractor:
 
-    base_url = "https://sdp-prem-prod.premier-league-prod.pulselive.com/"
+    base_url = "https://sdp-prem-prod.premier-league-prod.pulselive.com"
 
     def __init__(self):
         pass

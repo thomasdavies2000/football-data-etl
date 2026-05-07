@@ -83,6 +83,7 @@ def _load_season(
 def _preload_shared_dims(matches: list[dict]) -> None:
     competitions: dict = {}
     seasons: dict = {}
+    clubs: dict = {}
     for m in matches:
         cid = m["competitionId"]
         if cid not in competitions:
@@ -90,12 +91,19 @@ def _preload_shared_dims(matches: list[dict]) -> None:
         sid = m["season"]
         if sid not in seasons:
             seasons[sid] = {"id": sid, "label": _SEASON_LABEL.get(str(sid), str(sid))}
+        for side in ("homeTeam", "awayTeam"):
+            team = m[side]
+            tid = team["id"]
+            if tid not in clubs:
+                clubs[tid] = {"id": tid, "name": team["name"], "shortName": team.get("shortName")}
     with get_connection() as conn:
         loader = FootballDataLoader(conn)
         for comp in competitions.values():
             loader.load_competition(comp)
         for season in seasons.values():
             loader.load_season(season)
+        for club in clubs.values():
+            loader.load_club(club)
 
 
 def _process_matches(
@@ -126,10 +134,6 @@ def _process_match(
 ) -> None:
     with get_connection() as conn:
         loader = FootballDataLoader(conn)
-        for side in ("homeTeam", "awayTeam"):
-            team = match[side]
-            loader.load_club({"id": team["id"], "name": team["name"], "shortName": team.get("shortName")})
-
         loader.load_match(_build_match_record(match))
         _load_match(fetcher, transformer, loader, int(match["matchId"]))
 
