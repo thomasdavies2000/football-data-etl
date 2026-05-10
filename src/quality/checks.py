@@ -120,15 +120,14 @@ class QualityChecker:
     def check_lineup_starter_counts(self) -> CheckResult:
         with self.conn.cursor() as cur:
             cur.execute("""
-                SELECT COUNT(*) FROM (
-                    SELECT match_id, team_id
-                    FROM fact.match_lineup
-                    WHERE is_starter = TRUE
-                    GROUP BY match_id, team_id
-                    HAVING COUNT(*) != 11
-                ) violations
+                SELECT match_id, team_id, COUNT(*) AS starter_count
+                FROM fact.match_lineup
+                WHERE is_starter = TRUE
+                GROUP BY match_id, team_id
+                HAVING COUNT(*) != 11
             """)
-            violations = cur.fetchone()[0]
+            violation_rows = cur.fetchall()
+            violations = len(violation_rows)
 
             cur.execute("""
                 SELECT COUNT(DISTINCT match_id) FROM fact.match_lineup
@@ -136,6 +135,8 @@ class QualityChecker:
             total_matches = cur.fetchone()[0]
 
         logger.info(f"  {total_matches} matches checked, {violations} team lineup(s) without exactly 11 starters")
+        for match_id, team_id, count in violation_rows:
+            logger.info(f"    match_id={match_id}, team_id={team_id}, starter_count={count}")
 
         if violations:
             return CheckResult(
